@@ -1,0 +1,10 @@
+{
+  "name": "platform-web",
+  "version": "1.0.0",
+  "description": "Sample containerized web service deployed to AKS.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT"
+}
