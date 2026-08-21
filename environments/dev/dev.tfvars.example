@@ -1,0 +1,21 @@
+# Copy to dev.tfvars and adjust. dev.tfvars is gitignored.
+project     = "platform"
+environment = "dev"
+location    = "eastus"
+
+# Must be globally unique.
+acr_name       = "platformdevacr001"
+key_vault_name = "platform-dev-kv-001"
+
+# Azure AD principal that administers Azure SQL (AAD-only auth).
+sql_aad_admin_login     = "sql-admins"
+sql_aad_admin_object_id = "00000000-0000-0000-0000-000000000000"
+
+alert_email_receivers = {
+  oncall = "oncall@example.com"
+}
+
+tags = {
+  owner       = "platform-team"
+  costCenter  = "eng-platform"
+}
