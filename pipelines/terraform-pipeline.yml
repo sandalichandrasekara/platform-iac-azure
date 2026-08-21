@@ -1,0 +1,86 @@
+trigger:
+  branches:
+    include:
+      - test
+  paths:
+    include:
+      - modules/**
+      - environments/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - modules/**
+      - environments/**
+
+variables:
+  - group: terraform-backend        # backendResourceGroup, backendStorageAccount, backendContainer
+  - name: workingDir
+    value: environments/dev
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Validate
+    displayName: Validate and plan
+    jobs:
+      - job: plan
+        steps:
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: latest
+
+          - task: AzureCLI@2
+            displayName: terraform init/fmt/validate/plan
+            inputs:
+              azureSubscription: "platform-dev-sc"
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                cd $(workingDir)
+                terraform init \
+                  -backend-config="resource_group_name=$(backendResourceGroup)" \
+                  -backend-config="storage_account_name=$(backendStorageAccount)" \
+                  -backend-config="container_name=$(backendContainer)" \
+                  -backend-config="key=platform-iac-azure/dev.terraform.tfstate"
+                terraform fmt -check -recursive
+                terraform validate
+                terraform plan -var-file=dev.tfvars -out=tfplan
+
+          - publish: $(workingDir)/tfplan
+            artifact: tfplan
+
+  - stage: Apply
+    displayName: Apply (main only)
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: apply
+        environment: infra-dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: tfplan
+
+                - task: AzureCLI@2
+                  displayName: terraform apply
+                  inputs:
+                    azureSubscription: "platform-dev-sc"
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      cd $(workingDir)
+                      terraform init \
+                        -backend-config="resource_group_name=$(backendResourceGroup)" \
+                        -backend-config="storage_account_name=$(backendStorageAccount)" \
+                        -backend-config="container_name=$(backendContainer)" \
+                        -backend-config="key=platform-iac-azure/dev.terraform.tfstate"
+                      terraform apply "$(Pipeline.Workspace)/tfplan/tfplan"
