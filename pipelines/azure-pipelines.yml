@@ -1,0 +1,94 @@
+# Azure DevOps pipeline: build -> scan -> push to ACR -> deploy to AKS.
+
+trigger:
+  branches:
+    include:
+      - test
+  paths:
+    include:
+      - app/**
+      - kubernetes/**
+      - pipelines/**
+
+variables:
+  
+  azureSubscription: "platform-dev-sc"   # ARM service connection (workload identity federation)
+  acrName: "platformdevacr001"
+  imageRepository: "web"
+  aksResourceGroup: "rg-platform-dev"
+  aksClusterName: "platform-dev-aks"
+  tag: "$(Build.BuildId)"
+
+stages:
+
+  - stage: Build
+    displayName: Build, scan and push
+    jobs:
+      - job: build
+        displayName: Build image
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: Docker@2
+            displayName: Build image
+            inputs:
+              command: build
+              repository: $(imageRepository)
+              dockerfile: app/Dockerfile
+              tags: |
+                $(tag)
+
+          - task: Bash@3
+            displayName: Scan image with Trivy
+            inputs:
+              targetType: inline
+              script: |
+                set -euo pipefail
+                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                # Fail the build on HIGH/CRITICAL vulnerabilities.
+                trivy image --exit-code 1 --severity HIGH,CRITICAL \
+                  $(imageRepository):$(tag)
+
+          - task: Docker@2
+            displayName: Push image to ACR
+            inputs:
+              command: push
+              containerRegistry: $(acrName)
+              repository: $(imageRepository)
+              tags: |
+                $(tag)
+
+
+  - stage: Deploy
+    displayName: Deploy to AKS
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment: deploy
+        displayName: Kustomize apply
+        environment: dev
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: Set image tag and apply manifests
+                  inputs:
+                    azureSubscription: $(azureSubscription)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      az aks get-credentials \
+                        --resource-group $(aksResourceGroup) \
+                        --name $(aksClusterName) \
+                        --overwrite-existing
+
+                      cd kubernetes/overlays/dev
+                      kustomize edit set image \
+                        acr_login_server/web=$(acrName).azurecr.io/$(imageRepository):$(tag)
+
+                      kubectl apply -k .
+                      kubectl rollout status deployment/web -n app --timeout=180s
