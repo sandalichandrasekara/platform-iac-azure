@@ -6,7 +6,7 @@ resource "azurerm_mssql_server" "this" {
   minimum_tls_version           = "1.2"
   public_network_access_enabled = false
 
-  # Azure AD-only auth: no SQL admin password exists to leak.
+  # AAD-only auth: no SQL admin password to store or leak.
   azuread_administrator {
     login_username              = var.aad_admin_login
     object_id                   = var.aad_admin_object_id
@@ -17,11 +17,10 @@ resource "azurerm_mssql_server" "this" {
 }
 
 resource "azurerm_mssql_database" "this" {
-  name        = "${var.name_prefix}-db"
-  server_id   = azurerm_mssql_server.this.id
-  sku_name    = var.database_sku
-  collation   = "SQL_Latin1_General_CP1_CI_AS"
-  zone_redundant = false
+  name      = "${var.name_prefix}-db"
+  server_id = azurerm_mssql_server.this.id
+  sku_name  = var.database_sku
+  collation = "SQL_Latin1_General_CP1_CI_AS"
 
   tags = var.tags
 }

@@ -1,49 +1,27 @@
+# Ship the logs Container Insights doesn't cover: AKS control-plane/audit,
+# App Gateway WAF/access, and Key Vault audit events.
+
 resource "azurerm_monitor_diagnostic_setting" "aks" {
   name                       = "${local.name_prefix}-aks-diag"
   target_resource_id         = module.aks.cluster_id
   log_analytics_workspace_id = module.observability.workspace_id
-
-  # kube-apiserver, kube-audit-admin, cluster-autoscaler, guard, etc.
-  enabled_log {
-    category_group = "allLogs"
-  }
-
-  metric {
-    category = "AllMetrics"
-  }
+  enabled_log { category_group = "allLogs" }
 }
 
-# Captures ApplicationGatewayFirewallLog (WAF hits), access and performance logs.
 resource "azurerm_monitor_diagnostic_setting" "app_gateway" {
   name                       = "${local.name_prefix}-appgw-diag"
   target_resource_id         = module.app_gateway.gateway_id
   log_analytics_workspace_id = module.observability.workspace_id
-
-  enabled_log {
-    category_group = "allLogs"
-  }
-
-  metric {
-    category = "AllMetrics"
-  }
+  enabled_log { category_group = "allLogs" }
 }
 
-# AuditEvent
 resource "azurerm_monitor_diagnostic_setting" "key_vault" {
   name                       = "${local.name_prefix}-kv-diag"
   target_resource_id         = module.key_vault.key_vault_id
   log_analytics_workspace_id = module.observability.workspace_id
-
-  enabled_log {
-    category_group = "audit"
-  }
-
-  metric {
-    category = "AllMetrics"
-  }
+  enabled_log { category_group = "audit" }
 }
 
-# Close the loop
 resource "azurerm_monitor_metric_alert" "aks_node_cpu" {
   name                = "${local.name_prefix}-aks-node-cpu"
   resource_group_name = azurerm_resource_group.this.name

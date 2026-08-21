@@ -80,7 +80,7 @@ module "aks" {
   tags                       = local.tags
 }
 
-# Federate the workload identity to the freshly created cluster's OIDC issuer.
+# Federated to the cluster's OIDC issuer, so this must follow the AKS module.
 module "identity" {
   source              = "../../modules/identity"
   name_prefix         = local.name_prefix
@@ -110,15 +110,14 @@ module "policy" {
   allowed_locations = [var.location]
 }
 
-# Allow application pods (via workload identity) to read Key Vault secrets.
+# Pods read Key Vault secrets via their workload identity.
 resource "azurerm_role_assignment" "workload_kv_secrets" {
   scope                = module.key_vault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.identity.principal_id
 }
 
-# Local accounts are disabled, so the CI deploy identity needs Azure RBAC
-# cluster-admin to apply manifests via kubectl/kubelogin.
+# Local accounts are disabled; the CI identity needs Azure RBAC to run kubectl.
 resource "azurerm_role_assignment" "ci_aks_admin" {
   count                = var.ci_principal_object_id == "" ? 0 : 1
   scope                = module.aks.cluster_id

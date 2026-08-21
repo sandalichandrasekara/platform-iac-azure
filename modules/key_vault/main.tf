@@ -7,9 +7,7 @@ resource "azurerm_key_vault" "this" {
   purge_protection_enabled      = true
   soft_delete_retention_days    = 90
   public_network_access_enabled = false
-
-  # RBAC instead of access policies so identity assignments are auditable.
-  enable_rbac_authorization = true
+  enable_rbac_authorization     = true
 
   network_acls {
     default_action = "Deny"

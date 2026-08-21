@@ -17,7 +17,6 @@ resource "azurerm_public_ip" "this" {
   tags                = var.tags
 }
 
-# WAF policy carrying the managed OWASP core rule set.
 resource "azurerm_web_application_firewall_policy" "this" {
   name                = "${var.name_prefix}-waf-policy"
   location            = var.location
@@ -70,7 +69,7 @@ resource "azurerm_application_gateway" "this" {
     public_ip_address_id = azurerm_public_ip.this.id
   }
 
-
+  # Baseline config; AGIC rewrites the routing at runtime (see ignore_changes).
   backend_address_pool {
     name = local.backend_address_pool_name
   }
@@ -101,7 +100,6 @@ resource "azurerm_application_gateway" "this" {
 
   tags = var.tags
 
- 
   lifecycle {
     ignore_changes = [
       backend_address_pool,

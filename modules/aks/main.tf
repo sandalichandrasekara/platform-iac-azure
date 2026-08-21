@@ -5,15 +5,11 @@ resource "azurerm_kubernetes_cluster" "this" {
   dns_prefix          = "${var.name_prefix}-aks"
   kubernetes_version  = var.kubernetes_version
 
-  # Secretless pod-to-Azure auth.
   oidc_issuer_enabled       = true
   workload_identity_enabled = true
+  local_account_disabled    = true
+  azure_policy_enabled      = true
 
-  # AAD-integrated authorization only; no local admin kubeconfig to leak.
-  local_account_disabled = true
-
-  # System pool runs cluster-critical add-ons only (CriticalAddonsOnly taint),
-  # spread across availability zones for resilience.
   default_node_pool {
     name                         = "system"
     vm_size                      = var.system_node_pool.vm_size
@@ -22,16 +18,13 @@ resource "azurerm_kubernetes_cluster" "this" {
     orchestrator_version         = var.kubernetes_version
     only_critical_addons_enabled = true
     zones                        = var.availability_zones
-    node_labels = {
-      "nodepool-type" = "system"
-    }
+    node_labels                  = { "nodepool-type" = "system" }
   }
 
   identity {
     type = "SystemAssigned"
   }
 
-  # Azure RBAC for Kubernetes authorization; break-glass admin via AAD group.
   azure_active_directory_role_based_access_control {
     managed                = true
     azure_rbac_enabled     = true
@@ -50,9 +43,6 @@ resource "azurerm_kubernetes_cluster" "this" {
     log_analytics_workspace_id = var.log_analytics_workspace_id
   }
 
-  # Compliance-as-code enforcement inside the cluster.
-  azure_policy_enabled = true
-
   dynamic "ingress_application_gateway" {
     for_each = var.gateway_id == "" ? [] : [1]
     content {
@@ -63,8 +53,7 @@ resource "azurerm_kubernetes_cluster" "this" {
   tags = var.tags
 }
 
-# User workload pool with the cluster autoscaler enabled (HPA scales pods, this
-# scales the nodes underneath them).
+# HPA scales pods; this pool's autoscaler scales the nodes underneath.
 resource "azurerm_kubernetes_cluster_node_pool" "user" {
   name                  = "user"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.this.id
@@ -78,14 +67,11 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   min_count           = var.user_node_pool.min_count
   max_count           = var.user_node_pool.max_count
 
-  node_labels = {
-    "nodepool-type" = "user"
-  }
+  node_labels = { "nodepool-type" = "user" }
 
   tags = var.tags
 }
 
-# Let the kubelet pull images from ACR without a registry secret.
 resource "azurerm_role_assignment" "acr_pull" {
   scope                            = var.acr_id
   role_definition_name             = "AcrPull"
@@ -93,9 +79,7 @@ resource "azurerm_role_assignment" "acr_pull" {
   skip_service_principal_aad_check = true
 }
 
-# The AGIC add-on runs under its own managed identity. It must be able to
-# program the Application Gateway (Contributor) and read the resource group;
-# without these the ingress add-on comes up but never configures the gateway.
+# Without these the AGIC add-on starts but never programs the gateway.
 resource "azurerm_role_assignment" "agic_gateway" {
   count                = var.gateway_id == "" ? 0 : 1
   scope                = var.gateway_id

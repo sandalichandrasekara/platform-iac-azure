@@ -1,5 +1,4 @@
-# Workload identity used by application pods. No client secret is ever issued;
-# the pod's projected service-account token is exchanged for an Azure token.
+# Federated to a K8s service account over OIDC — no client secret is issued.
 resource "azurerm_user_assigned_identity" "workload" {
   name                = "${var.name_prefix}-workload-id"
   location            = var.location
@@ -7,7 +6,6 @@ resource "azurerm_user_assigned_identity" "workload" {
   tags                = var.tags
 }
 
-# Federate the Kubernetes service account to the managed identity over OIDC.
 resource "azurerm_federated_identity_credential" "workload" {
   name                = "${var.name_prefix}-workload-fic"
   resource_group_name = var.resource_group_name

@@ -92,7 +92,7 @@ stages:
                       az aks install-cli --only-show-errors
                       kubelogin convert-kubeconfig -l azurecli
 
-                      cd kubernetes/overlays/dev
+                      cd kubernetes/base
                       kustomize edit set image \
                         acr_login_server/web=$(acrName).azurecr.io/$(imageRepository):$(tag)
 

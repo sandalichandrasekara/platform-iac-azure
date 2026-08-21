@@ -7,7 +7,7 @@ resource "azurerm_log_analytics_workspace" "this" {
   tags                = var.tags
 }
 
-# Container Insights - surfaces node/pod/container metrics and logs in Azure Monitor.
+# Container Insights: node/pod/container telemetry into the workspace.
 resource "azurerm_log_analytics_solution" "container_insights" {
   solution_name         = "ContainerInsights"
   location              = var.location
@@ -23,7 +23,6 @@ resource "azurerm_log_analytics_solution" "container_insights" {
   tags = var.tags
 }
 
-# Alert routing target.
 resource "azurerm_monitor_action_group" "critical" {
   name                = "${var.name_prefix}-ag-critical"
   resource_group_name = var.resource_group_name
