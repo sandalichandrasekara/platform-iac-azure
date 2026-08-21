@@ -1,5 +1,5 @@
 variable "name_prefix" {
-  description = "Prefix applied to all networking resource names (e.g. platform-dev)."
+  description = "Prefix applied to all networking resource names"
   type        = string
 }
 
