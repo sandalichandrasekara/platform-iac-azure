@@ -36,6 +36,12 @@ variable "waf_mode" {
   default     = "Prevention"
 }
 
+variable "zones" {
+  description = "Availability zones for the gateway and its public IP (zone-redundant)."
+  type        = list(string)
+  default     = ["1", "2", "3"]
+}
+
 variable "tags" {
   description = "Tags applied to all resources."
   type        = map(string)

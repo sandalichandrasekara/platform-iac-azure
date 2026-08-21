@@ -37,6 +37,8 @@ resource "azurerm_network_security_group" "aks" {
   tags                = var.tags
 }
 
+# AGIC uses Azure CNI to route directly to pod IPs on their container port,
+# so the allowed destination is the app's target port (8080), not 80/443.
 resource "azurerm_network_security_rule" "aks_allow_appgw" {
   name                        = "Allow-AppGw-Inbound"
   priority                    = 100
@@ -44,7 +46,7 @@ resource "azurerm_network_security_rule" "aks_allow_appgw" {
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_ranges     = ["80", "443"]
+  destination_port_ranges     = ["80", "443", "8080"]
   source_address_prefix       = var.subnet_prefixes.appgw
   destination_address_prefix  = var.subnet_prefixes.aks
   resource_group_name         = var.resource_group_name

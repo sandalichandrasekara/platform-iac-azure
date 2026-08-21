@@ -86,6 +86,12 @@ stages:
                         --name $(aksClusterName) \
                         --overwrite-existing
 
+                      # Local accounts are disabled on the cluster, so convert the
+                      # kubeconfig to non-interactive AAD auth using the pipeline's
+                      # az login session. Ensure kubelogin is available.
+                      az aks install-cli --only-show-errors
+                      kubelogin convert-kubeconfig -l azurecli
+
                       cd kubernetes/overlays/dev
                       kustomize edit set image \
                         acr_login_server/web=$(acrName).azurecr.io/$(imageRepository):$(tag)

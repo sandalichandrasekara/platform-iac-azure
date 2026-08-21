@@ -36,6 +36,18 @@ variable "sql_aad_admin_object_id" {
   type        = string
 }
 
+variable "aks_admin_group_object_ids" {
+  description = "Azure AD group object IDs granted AKS cluster-admin (local accounts are disabled)."
+  type        = list(string)
+  default     = []
+}
+
+variable "ci_principal_object_id" {
+  description = "Object ID of the CI/CD deploy identity, granted Azure RBAC cluster-admin on AKS so the pipeline can apply manifests. Empty skips the grant."
+  type        = string
+  default     = ""
+}
+
 variable "alert_email_receivers" {
   description = "Map of name => email for Action Group alert routing."
   type        = map(string)

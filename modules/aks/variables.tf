@@ -13,10 +13,27 @@ variable "resource_group_name" {
   type        = string
 }
 
+variable "resource_group_id" {
+  description = "Resource group ID, used to grant the AGIC add-on identity Reader."
+  type        = string
+}
+
 variable "kubernetes_version" {
   description = "Kubernetes control plane version."
   type        = string
   default     = "1.29"
+}
+
+variable "availability_zones" {
+  description = "Zones the node pools are spread across for resilience."
+  type        = list(string)
+  default     = ["1", "2", "3"]
+}
+
+variable "aks_admin_group_object_ids" {
+  description = "Azure AD group object IDs granted cluster-admin (break-glass). Local accounts are disabled, so this must be set to retain access."
+  type        = list(string)
+  default     = []
 }
 
 variable "aks_subnet_id" {

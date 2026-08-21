@@ -71,10 +71,12 @@ module "aks" {
   name_prefix                = local.name_prefix
   location                   = var.location
   resource_group_name        = azurerm_resource_group.this.name
+  resource_group_id          = azurerm_resource_group.this.id
   aks_subnet_id              = module.networking.aks_subnet_id
   log_analytics_workspace_id = module.observability.workspace_id
   acr_id                     = module.acr.acr_id
   gateway_id                 = module.app_gateway.gateway_id
+  aks_admin_group_object_ids = var.aks_admin_group_object_ids
   tags                       = local.tags
 }
 
@@ -113,4 +115,13 @@ resource "azurerm_role_assignment" "workload_kv_secrets" {
   scope                = module.key_vault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.identity.principal_id
+}
+
+# Local accounts are disabled, so the CI deploy identity needs Azure RBAC
+# cluster-admin to apply manifests via kubectl/kubelogin.
+resource "azurerm_role_assignment" "ci_aks_admin" {
+  count                = var.ci_principal_object_id == "" ? 0 : 1
+  scope                = module.aks.cluster_id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  principal_id         = var.ci_principal_object_id
 }

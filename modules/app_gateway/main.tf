@@ -13,6 +13,7 @@ resource "azurerm_public_ip" "this" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
+  zones               = var.zones
   tags                = var.tags
 }
 
@@ -42,6 +43,7 @@ resource "azurerm_application_gateway" "this" {
   location            = var.location
   resource_group_name = var.resource_group_name
   firewall_policy_id  = azurerm_web_application_firewall_policy.this.id
+  zones               = var.zones
 
   sku {
     name = "WAF_v2"

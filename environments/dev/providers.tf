@@ -9,7 +9,3 @@ provider "azurerm" {
     }
   }
 }
-
-provider "azuread" {}
-
-provider "random" {}
