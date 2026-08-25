@@ -19,16 +19,6 @@ data "terraform_remote_state" "cluster" {
   }
 }
 
-data "terraform_remote_state" "k8s_base" {
-  backend = "azurerm"
-  config = {
-    resource_group_name  = "rg-tfstate"
-    storage_account_name = "sttfstateplatform"
-    container_name       = "tfstate"
-    key                  = "platform-k8s-base.tfstate"
-  }
-}
-
 locals {
   cluster = data.terraform_remote_state.cluster.outputs
 }
