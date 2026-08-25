@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace and the workload-identity ServiceAccount are provisioned by
+# terraform/k8s-base, so they are intentionally not part of this base.
+namespace: app
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+# CI runs `kustomize edit set image` in the active overlay to pin the built tag.
+images:
+  - name: web
+    newTag: latest
