@@ -1,0 +1,63 @@
+name: App - Build, Scan, Push
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "kustomize/**"
+      - ".github/workflows/app-build.yml"
+
+permissions:
+  id-token: write
+  contents: write # to commit the image-tag bump back to the overlay
+
+env:
+  ACR_NAME: "${{ vars.ACR_NAME }}" # e.g. platformdevacr001
+  IMAGE_REPOSITORY: "web"
+  OVERLAY: "kustomize/base/web/dev"
+
+jobs:
+  build:
+    name: Build, scan, push and bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_TF_SP_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TF_SP_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_TF_SP_SUBSCRIPTION_ID }}
+
+      - name: Build image
+        run: docker build -t "$IMAGE_REPOSITORY:${{ github.sha }}" -f app/Dockerfile app
+
+      - name: Scan image with Trivy (fail on HIGH/CRITICAL)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy image --exit-code 1 --severity HIGH,CRITICAL "$IMAGE_REPOSITORY:${{ github.sha }}"
+
+      - name: Push to ACR
+        run: |
+          az acr login --name "$ACR_NAME"
+          LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+          docker tag "$IMAGE_REPOSITORY:${{ github.sha }}" "$LOGIN_SERVER/$IMAGE_REPOSITORY:${{ github.sha }}"
+          docker push "$LOGIN_SERVER/$IMAGE_REPOSITORY:${{ github.sha }}"
+          echo "LOGIN_SERVER=$LOGIN_SERVER" >> "$GITHUB_ENV"
+
+      - name: Bump image tag in overlay (GitOps handoff to ArgoCD)
+        run: |
+          curl -sSfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz | tar -xz -C /usr/local/bin
+          cd "$OVERLAY"
+          kustomize edit set image "web=$LOGIN_SERVER/$IMAGE_REPOSITORY:${{ github.sha }}"
+
+      - name: Commit and push overlay update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$OVERLAY/kustomization.yaml"
+          git commit -m "ci: bump web image to ${{ github.sha }}" || echo "no changes"
+          git push

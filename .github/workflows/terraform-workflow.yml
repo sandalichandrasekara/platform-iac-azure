@@ -1,0 +1,108 @@
+name: Terraform - Apply
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "kustomize/**"
+      - "app/**"
+      - "**/*.md"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "kustomize/**"
+      - "app/**"
+      - "**/*.md"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_CLIENT_ID: "${{ vars.AZURE_TF_SP_CLIENT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.AZURE_TF_SP_CLIENT_SECRET }}"
+  ARM_SUBSCRIPTION_ID: "${{ vars.AZURE_TF_SP_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ vars.AZURE_TF_SP_TENANT_ID }}"
+  # The cluster layer's azurerm 4.x provider requires an explicit subscription id.
+  TF_VAR_subscription_id: "${{ vars.AZURE_TF_SP_SUBSCRIPTION_ID }}"
+  # kubelogin (spn login) reads these for the k8s-base / k8s-extensions layers.
+  AAD_SERVICE_PRINCIPAL_CLIENT_ID: "${{ vars.AZURE_TF_SP_CLIENT_ID }}"
+  AAD_SERVICE_PRINCIPAL_CLIENT_SECRET: "${{ secrets.AZURE_TF_SP_CLIENT_SECRET }}"
+  AZURE_TENANT_ID: "${{ vars.AZURE_TF_SP_TENANT_ID }}"
+
+jobs:
+  cluster:
+    name: Cluster
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.4
+      - name: Init
+        working-directory: terraform/cluster
+        run: terraform init
+      - name: Validate
+        working-directory: terraform/cluster
+        run: terraform validate
+      - name: Plan
+        working-directory: terraform/cluster
+        run: terraform plan -out=tfplan -input=false
+      - name: Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: terraform/cluster
+        run: terraform apply -auto-approve -input=false tfplan
+
+  k8s-base:
+    name: K8s - Base
+    runs-on: ubuntu-latest
+    needs: cluster
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.4
+      - uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: v0.1.4
+      - name: Init
+        working-directory: terraform/k8s-base
+        run: terraform init
+      - name: Validate
+        working-directory: terraform/k8s-base
+        run: terraform validate
+      - name: Plan
+        working-directory: terraform/k8s-base
+        run: terraform plan -out=tfplan -input=false
+      - name: Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: terraform/k8s-base
+        run: terraform apply -auto-approve -input=false tfplan
+
+  k8s-extensions:
+    name: K8s - Extensions
+    runs-on: ubuntu-latest
+    needs: k8s-base
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.4
+      - uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: v0.1.4
+      - name: Init
+        working-directory: terraform/k8s-extensions
+        run: terraform init
+      - name: Validate
+        working-directory: terraform/k8s-extensions
+        run: terraform validate
+      - name: Plan
+        working-directory: terraform/k8s-extensions
+        run: terraform plan -out=tfplan -input=false
+      - name: Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        working-directory: terraform/k8s-extensions
+        run: terraform apply -auto-approve -input=false tfplan
