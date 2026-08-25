@@ -1,6 +1,3 @@
-# Ship the logs Container Insights doesn't cover: AKS control-plane/audit,
-# App Gateway WAF/access, and Key Vault audit events.
-
 resource "azurerm_monitor_diagnostic_setting" "aks" {
   name                       = "${local.name_prefix}-aks-diag"
   target_resource_id         = module.aks.cluster_id

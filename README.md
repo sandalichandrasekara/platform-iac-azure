@@ -5,19 +5,19 @@ Service (AKS)**, with GitOps delivery via **ArgoCD**. Bring your own app manifes
 
 ## What it provisions
 
-- **Networking** — VNet with dedicated subnets (App Gateway, AKS, private endpoints) + NSG
-- **Ingress** — Application Gateway with **WAF_v2** (OWASP), wired to AKS via AGIC
-- **AKS** — AAD-only cluster (local accounts disabled), system + autoscaling user node pools, workload identity (OIDC)
-- **Registry & secrets** — ACR and Key Vault, reachable only over private endpoints
-- **Data** — Azure SQL (private, AAD-only auth)
-- **Identity** — managed identity federated to a Kubernetes service account — no secrets in the cluster
-- **Observability** — Log Analytics, Container Insights, metric alerts + Action Group
-- **Guardrails** — Azure Policy (allowed locations, required tags)
-- **Delivery** — ArgoCD for GitOps
+- **Networking**: VNet with dedicated subnets (App Gateway, AKS, private endpoints) + NSG
+- **Ingress** - Application Gateway with **WAF_v2** (OWASP), wired to AKS via AGIC
+- **AKS** - AAD-only cluster (local accounts disabled), system + autoscaling user node pools, workload identity (OIDC)
+- **Registry & secrets** - ACR and Key Vault, reachable only over private endpoints
+- **Data** - Azure SQL (private, AAD-only auth)
+- **Identity** - managed identity federated to a Kubernetes service account - no secrets in the cluster
+- **Observability** - Log Analytics, Container Insights, metric alerts + Action Group
+- **Guardrails** - Azure Policy (allowed locations, required tags)
+- **Delivery** - ArgoCD for GitOps
 
 ## Layers
 
-Applied **in order** — each keeps state in Azure Blob Storage and reads the
+Applied **in order** - each keeps state in Azure Blob Storage and reads the
 previous layer's outputs via `terraform_remote_state`.
 
 | Layer | Provisions |
@@ -37,7 +37,7 @@ modules/                                       reusable building blocks
 ### 1. One-time prerequisites
 
 ```bash
-# Service principal (Owner — the cluster layer creates role assignments)
+# Service principal 
 az ad sp create-for-rbac --name sp-terraform-platform --role Owner \
   --scopes /subscriptions/<subscription-id>
 
@@ -55,15 +55,12 @@ export ARM_CLIENT_ID=... ARM_CLIENT_SECRET=... ARM_TENANT_ID=... ARM_SUBSCRIPTIO
 
 ```bash
 cd terraform/cluster
-cp terraform.tfvars.example terraform.tfvars   # edit values
+cp terraform.tfvars.example terraform.tfvars   
 terraform init && terraform apply
 
 cd ../k8s-base        && terraform init && terraform apply
 cd ../k8s-extensions  && terraform init && terraform apply
 ```
-
-CI (`.github/workflows/terraform-workflow.yml`) runs the same layers in order:
-plan on pull requests, apply on push to `main`.
 
 ### 3. Cluster access
 

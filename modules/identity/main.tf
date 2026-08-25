@@ -1,4 +1,4 @@
-# Federated to a K8s service account over OIDC — no client secret is issued.
+# Federated to a K8s service account over OIDC and no client secret is issued.
 resource "azurerm_user_assigned_identity" "workload" {
   name                = "${var.name_prefix}-workload-id"
   location            = var.location

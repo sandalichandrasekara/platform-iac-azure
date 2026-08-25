@@ -1,5 +1,3 @@
-# --- Consumed by the k8s-base / k8s-extensions layers via terraform_remote_state ---
-
 output "workload_identity_client_id" {
   description = "Client ID annotated on the workload service account."
   value       = module.identity.client_id
