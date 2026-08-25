@@ -1,6 +1,5 @@
 # Copy to terraform.tfvars and adjust. terraform.tfvars is gitignored.
-
-subscription_id = "00000000-0000-0000-0000-000000000000"
+# The subscription comes from ARM_SUBSCRIPTION_ID in your environment.
 
 project     = "platform"
 environment = "dev"

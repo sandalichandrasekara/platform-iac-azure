@@ -1,7 +1,5 @@
 provider "azurerm" {
-  # Required by the azurerm 4.x provider.
-  subscription_id = var.subscription_id
-
+  # Subscription comes from ARM_SUBSCRIPTION_ID in the environment.
   features {
     key_vault {
       purge_soft_delete_on_destroy    = false

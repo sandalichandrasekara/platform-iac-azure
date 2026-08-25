@@ -1,8 +1,3 @@
-variable "subscription_id" {
-  description = "Azure subscription ID (required by the azurerm 4.x provider)."
-  type        = string
-}
-
 variable "project" {
   description = "Short project identifier used in resource names."
   type        = string
