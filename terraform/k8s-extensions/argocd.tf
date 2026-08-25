@@ -20,10 +20,11 @@ resource "helm_release" "argocd" {
     }
     server = {
       ingress = {
-        enabled          = var.argocd_hostname != ""
-        ingressClassName = "azure-application-gateway"
+        enabled = var.argocd_hostname != ""
         annotations = {
-          "appgw.ingress.kubernetes.io/backend-protocol" = "http"
+          # AGIC ingress selector + HTTP to the (insecure) argocd-server backend.
+          "kubernetes.io/ingress.class"                   = "azure/application-gateway"
+          "appgw.ingress.kubernetes.io/backend-protocol"  = "http"
         }
         hostname = var.argocd_hostname
       }

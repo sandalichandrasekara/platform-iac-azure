@@ -21,8 +21,6 @@ env:
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_TF_SP_CLIENT_SECRET }}"
   ARM_SUBSCRIPTION_ID: "${{ vars.AZURE_TF_SP_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ vars.AZURE_TF_SP_TENANT_ID }}"
-  # The cluster layer's azurerm 4.x provider requires an explicit subscription id.
-  TF_VAR_subscription_id: "${{ vars.AZURE_TF_SP_SUBSCRIPTION_ID }}"
   # kubelogin (spn login) reads these for the k8s-base / k8s-extensions layers.
   AAD_SERVICE_PRINCIPAL_CLIENT_ID: "${{ vars.AZURE_TF_SP_CLIENT_ID }}"
   AAD_SERVICE_PRINCIPAL_CLIENT_SECRET: "${{ secrets.AZURE_TF_SP_CLIENT_SECRET }}"
