@@ -3,11 +3,6 @@ output "vnet_id" {
   value       = azurerm_virtual_network.this.id
 }
 
-output "vnet_name" {
-  description = "Name of the virtual network."
-  value       = azurerm_virtual_network.this.name
-}
-
 output "aks_subnet_id" {
   description = "Subnet ID for the AKS node pools."
   value       = azurerm_subnet.aks.id

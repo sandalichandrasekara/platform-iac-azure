@@ -13,16 +13,6 @@ output "oidc_issuer_url" {
   value       = azurerm_kubernetes_cluster.this.oidc_issuer_url
 }
 
-output "kubelet_identity_object_id" {
-  description = "Object ID of the kubelet managed identity."
-  value       = azurerm_kubernetes_cluster.this.kubelet_identity[0].object_id
-}
-
-output "node_resource_group" {
-  description = "Auto-generated resource group holding cluster node resources."
-  value       = azurerm_kubernetes_cluster.this.node_resource_group
-}
-
 # Local accounts are disabled, so kube_admin_config is empty. Downstream layers
 # configure the kubernetes/helm providers via AAD (kubelogin exec) using these.
 output "kube_config_host" {
