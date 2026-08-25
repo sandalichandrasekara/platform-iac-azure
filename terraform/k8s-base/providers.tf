@@ -1,19 +1,10 @@
 terraform {
   required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.16"
-    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = ">= 2.35.1"
     }
   }
-}
-
-provider "azurerm" {
-  subscription_id = local.cluster.subscription_id
-  features {}
 }
 
 # AKS has local accounts disabled (AAD + Azure RBAC only), so the provider

@@ -105,7 +105,6 @@ module "database" {
 module "policy" {
   source            = "../../modules/policy"
   name_prefix       = local.name_prefix
-  location          = var.location
   resource_group_id = azurerm_resource_group.this.id
   allowed_locations = [var.location]
 }

@@ -29,8 +29,6 @@ resource "helm_release" "argocd" {
       }
     }
   })]
-
-  depends_on = [kubernetes_namespace.argocd]
 }
 
 # Repository connection for the GitOps repo ArgoCD reconciles from.
@@ -51,6 +49,4 @@ resource "kubernetes_secret" "gitops_repo" {
     username = var.gitops_repo_username
     password = var.gitops_repo_password
   }
-
-  depends_on = [helm_release.argocd]
 }

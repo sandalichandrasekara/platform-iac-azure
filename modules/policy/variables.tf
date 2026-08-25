@@ -3,11 +3,6 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "location" {
-  description = "Azure region (required for policy assignments with identities)."
-  type        = string
-}
-
 variable "resource_group_id" {
   description = "Scope for the policy assignments."
   type        = string

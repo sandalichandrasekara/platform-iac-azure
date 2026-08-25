@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars and adjust. terraform.tfvars is gitignored.
+
+# Hostname ArgoCD is served on via the Application Gateway (AGIC). Empty = no ingress.
+argocd_hostname = "argocd.example.com"
+
+argocd_chart_version = "7.7.6"
+
+# GitOps repository ArgoCD reconciles from. Leave empty to configure repos in the UI.
+gitops_repo_url      = "https://github.com/your-org/platform-iac-azure.git"
+gitops_repo_username = "git"
+# gitops_repo_password = "<PAT>"  # private repos only; prefer TF_VAR_gitops_repo_password

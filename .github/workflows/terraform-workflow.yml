@@ -5,15 +5,11 @@ on:
     branches:
       - main
     paths-ignore:
-      - "kustomize/**"
-      - "app/**"
       - "**/*.md"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - "kustomize/**"
-      - "app/**"
       - "**/*.md"
 
 permissions:

@@ -24,8 +24,8 @@ locals {
   cluster = data.terraform_remote_state.cluster.outputs
 }
 
-# Application namespace. Managed here (not in Kustomize) so identity-integrated
-# resources can reference it; ArgoCD/Kustomize only manage app deployments.
+# Application namespace: the landing zone for workloads deployed via GitOps.
+# Created here so the workload-identity service account below can be federated.
 resource "kubernetes_namespace" "app" {
   metadata {
     name = "app"

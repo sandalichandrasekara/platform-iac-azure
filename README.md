@@ -1,13 +1,13 @@
 # Azure Platform Infrastructure
 
-Cloud-native **Terraform** platform that runs a containerized application on
-**Azure Kubernetes Service (AKS)** with GitOps-style delivery, built to follow
-the [Azure Well-Architected Framework](https://learn.microsoft.com/azure/well-architected/)
+Cloud-native **Terraform** platform on **Azure Kubernetes Service (AKS)** with
+GitOps-style delivery (ArgoCD), built to follow the
+[Azure Well-Architected Framework](https://learn.microsoft.com/azure/well-architected/)
 across reliability, security, cost, operational excellence, and performance.
 
-> **Approach:** This is a full platform: an AKS cluster,
-> secure ingress, identity without secrets, private data access, observability,
-> guardrails, and a CI/CD pipeline that builds, scans, pushes, and deploys.
+> **Approach:** the platform baseline — an AKS cluster, secure ingress, identity
+> without secrets, private data access, observability, guardrails, and ArgoCD for
+> GitOps delivery. Bring your own application manifests.
 
 ---
 
@@ -54,9 +54,7 @@ terraform/
   k8s-base/         app namespace + workload-identity ServiceAccount
   k8s-extensions/   ArgoCD (GitOps), served via AGIC
 modules/            Reusable Terraform modules consumed by the cluster layer
-kustomize/base/web/ App manifests: common/ base + dev|test|stage|prod-us overlays
-scripts/            One-time bootstrap (Terraform SP, state storage account)
-.github/workflows/  terraform-workflow.yml (layered apply) · app-build.yml (build/scan/push)
+.github/workflows/  terraform-workflow.yml (layered plan/apply)
 ```
 
 The three Terraform layers are applied **in order** (`cluster → k8s-base →
@@ -66,9 +64,14 @@ Azure Blob Storage, with the backend hardcoded per layer.
 ## Getting started
 
 ```bash
-# 1. One-time bootstrap (see scripts/README.md)
-scripts/terraform-sp/create-terraform-sp.sh <subscription-id>
-scripts/terraform-storage/create-storage-account.sh rg-tfstate sttfstateplatform eastus
+# 1. One-time bootstrap: a service principal (Owner, for role assignments) and
+#    the Azure Blob backend the layers expect (rg-tfstate / sttfstateplatform / tfstate).
+az ad sp create-for-rbac --name sp-terraform-platform --role Owner \
+  --scopes /subscriptions/<subscription-id>
+az group create -n rg-tfstate -l eastus
+az storage account create -n sttfstateplatform -g rg-tfstate -l eastus \
+  --sku Standard_LRS --min-tls-version TLS1_2 --allow-blob-public-access false
+az storage container create -n tfstate --account-name sttfstateplatform --auth-mode login
 
 # 2. Apply each layer in order
 cd terraform/cluster && cp terraform.tfvars.example terraform.tfvars  # then edit
