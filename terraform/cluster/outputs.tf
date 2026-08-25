@@ -18,6 +18,24 @@ output "oidc_issuer_url" {
   value       = module.aks.oidc_issuer_url
 }
 
+output "subscription_id" {
+  description = "Azure subscription ID (consumed by downstream layers' provider config)."
+  value       = var.subscription_id
+}
+
+# Consumed by k8s-base / k8s-extensions to configure the kubernetes/helm providers
+# against an AAD-only (local accounts disabled) cluster via kubelogin.
+output "kube_config_host" {
+  description = "AKS API server URL."
+  value       = module.aks.kube_config_host
+}
+
+output "kube_config_ca_certificate" {
+  description = "Base64 cluster CA certificate."
+  value       = module.aks.kube_config_ca_certificate
+  sensitive   = true
+}
+
 output "acr_login_server" {
   description = "ACR login server for image pushes/pulls."
   value       = module.acr.login_server

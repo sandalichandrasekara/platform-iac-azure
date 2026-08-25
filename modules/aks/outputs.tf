@@ -22,3 +22,16 @@ output "node_resource_group" {
   description = "Auto-generated resource group holding cluster node resources."
   value       = azurerm_kubernetes_cluster.this.node_resource_group
 }
+
+# Local accounts are disabled, so kube_admin_config is empty. Downstream layers
+# configure the kubernetes/helm providers via AAD (kubelogin exec) using these.
+output "kube_config_host" {
+  description = "API server URL from the AAD-integrated kube_config."
+  value       = azurerm_kubernetes_cluster.this.kube_config[0].host
+}
+
+output "kube_config_ca_certificate" {
+  description = "Base64 cluster CA certificate from the AAD-integrated kube_config."
+  value       = azurerm_kubernetes_cluster.this.kube_config[0].cluster_ca_certificate
+  sensitive   = true
+}
